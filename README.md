@@ -55,7 +55,7 @@ Compute the approximated SVD of a generic matrix.
 
 ```python
 import numpy as np
-from src.core import rsvd
+from randomized_svd.core import rsvd
 
 # Generate a large random matrix (1000 x 500)
 X = np.random.randn(1000, 500)
@@ -74,8 +74,8 @@ print(f"Vt shape: {Vt.shape}") # (10, 500)
 Use the Gavish-Donoho optimal threshold to remove white noise from a signal.
 
 ```python
-from src.core import rsvd
-from src.utils import optimal_threshold
+from randomized_svd.core import rsvd
+from randomized_svd.utils import optimal_threshold
 
 # Assume X_noisy is your data matrix and sigma is the noise level
 target_rank = optimal_threshold(m=1000, n=500, gamma=0.5)

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from src.core import rsvd
+from randomized_svd.core import rsvd
 
 
 # --- Fixtures & Helpers ---

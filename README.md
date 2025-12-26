@@ -55,7 +55,7 @@ Compute the approximated SVD of a generic matrix.
 
 ```python
 import numpy as np
-from randomized_svd.core import rsvd
+from randomized_svd import rsvd
 
 # Generate a large random matrix (1000 x 500)
 X = np.random.randn(1000, 500)
@@ -74,10 +74,14 @@ print(f"Vt shape: {Vt.shape}") # (10, 500)
 Use the Gavish-Donoho optimal threshold to remove white noise from a signal.
 
 ```python
-from randomized_svd.core import rsvd
-from randomized_svd.utils import optimal_threshold
+import numpy as np
+from randomized_svd import rsvd, optimal_threshold
 
-# Assume X_noisy is your data matrix and sigma is the noise level
+# Create a synthetic noisy signal
+X_true = np.random.randn(1000, 10) @ np.random.randn(10, 500)
+X_noisy = X_true + 0.5 * np.random.randn(1000, 500)
+
+# Calculate optimal rank based on noise level (gamma)
 target_rank = optimal_threshold(m=1000, n=500, gamma=0.5)
 
 # Clean the matrix using the optimal rank
@@ -98,9 +102,10 @@ randomized-svd/
 ├── docs/                 # Thesis PDF and extra documentation
 ├── examples/             # Jupyter Notebooks (Demos & Benchmarks)
 ├── src/                  # Source code
-│   ├── __init__.py
-│   ├── core.py           # Main rSVD logic (Facade & Implementations)
-│   └── utils.py          # Math helpers (Gavish-Donoho threshold)
+│   └── randomized_svd/   # Package source
+│       ├── __init__.py
+│       ├── core.py       # Main rSVD logic (Facade & Implementations)
+│       └── utils.py      # Math helpers (Gavish-Donoho threshold)
 ├── tests/                # Pytest suite
 ├── Dockerfile            # Reproducible testing environment
 ├── pyproject.toml        # Dependencies and metadata (replaces setup.py)

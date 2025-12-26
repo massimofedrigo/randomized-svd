@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def rsvd(X: np.ndarray, t: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute the Randomized Singular Value Decomposition of a general matrix.

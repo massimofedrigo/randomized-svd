@@ -180,4 +180,4 @@ This project is licensed under the MIT License - see the [LICENSE](https://mit-l
 
 **Author:** Massimo Fedrigo
 
-**Contact:** massimo@massimofedrigo.com
+**Contact:** contact@massimofedrigo.com

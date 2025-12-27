@@ -9,7 +9,7 @@
 
 It is designed to handle massive matrices efficiently by decomposing them into a smaller, random subspace before computing the SVD. This approach is significantly faster than deterministic methods (like LAPACK's `dgesdd`) while maintaining high numerical accuracy for low-rank approximations.
 
-> **Original Research:** This library is the engineering implementation of the thesis *"Un algoritmo per il calcolo randomizzato della SVD"* (M. Fedrigo). You can read the full theoretical background in the [docs/thesis_fedrigo.pdf](./docs/thesis_fedrigo.pdf).
+> **Original Research:** This library is the engineering implementation of the thesis *"Un algoritmo per il calcolo randomizzato della SVD"* (M. Fedrigo). You can read the full theoretical background in the [docs/thesis.pdf](./docs/thesis.pdf).
 
 ---
 
@@ -167,15 +167,16 @@ pytest -v
 
 ## 📚 References
 
-1. **Fedrigo, M.** (2024). *Un algoritmo per il calcolo randomizzato della SVD*. [PDF Available](https://www.google.com/search?q=./docs/thesis_fedrigo.pdf).
-2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions. *SIAM review*.
-3. **Gavish, M., & Donoho, D. L.** (2014). The optimal hard threshold for singular values is .
+1. **Fedrigo, M.** (2024). *Un algoritmo per il calcolo randomizzato della SVD*. [PDF Available](./docs/thesis.pdf).
+2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. *SIAM review*.
+3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is $4/\sqrt{3}$*.
+4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*. 
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://mit-license.org/) file for details.
 
 **Author:** Massimo Fedrigo
 

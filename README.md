@@ -188,7 +188,7 @@ pytest -v
 
 ## 📚 References
 
-1. **Fedrigo, M.** (2024). *Un algoritmo per il calcolo randomizzato della SVD*. [PDF Available](./docs/thesis.pdf).
+1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](./docs/thesis.pdf).
 2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. *SIAM review*.
 3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is *.
 4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*.

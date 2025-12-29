@@ -50,9 +50,7 @@ Once the environment is active (you should see `(venv)` in your terminal), choos
 **For Users (Standard Usage):**
 
 ```bash
-git clone [https://github.com/massimofedrigo/randomized-svd.git](https://github.com/massimofedrigo/randomized-svd.git)
-cd randomized-svd
-pip install .
+pip install git+https://github.com/massimofedrigo/randomized-svd.git
 
 ```
 

@@ -28,6 +28,8 @@ To avoid conflicts with other projects or system packages, it is recommended to 
 
 ### 1. Create and Activate a Virtual Environment
 
+Within your project root folder, run the following commands:
+
 **Linux / macOS:**
 ```bash
 python3 -m venv venv
@@ -48,16 +50,19 @@ python -m venv venv
 Once the environment is active (you should see `(venv)` in your terminal), choose your installation mode:
 
 **For Users (Standard Usage):**
+Install directly from PyPI:
 
 ```bash
-pip install git+https://github.com/massimofedrigo/randomized-svd.git
+pip install randomized-svd
 
 ```
 
 **For Developers (Testing & Contributing):**
-This installs the package in *editable mode* along with testing tools (pytest, etc.).
+Clone the repository and install in *editable mode* to reflect code changes immediately.
 
 ```bash
+git clone [https://github.com/massimofedrigo/randomized-svd.git](https://github.com/massimofedrigo/randomized-svd.git)
+cd randomized-svd
 pip install -e ".[dev]"
 
 ```
@@ -197,6 +202,8 @@ pytest -v
 
 This project is licensed under the MIT License - see the [LICENSE](https://mit-license.org/) file for details.
 
-**Author:** Massimo Fedrigo\
-**Portfolio & Research:** [massimofedrigo.com](https://massimofedrigo.com)\
+**Author:** Massimo Fedrigo
+
+**Portfolio & Research:** [massimofedrigo.com](https://massimofedrigo.com)
+
 **Contact:** contact@massimofedrigo.com

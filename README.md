@@ -9,7 +9,7 @@
 
 It is designed to handle massive matrices efficiently by decomposing them into a smaller, random subspace before computing the SVD. This approach is significantly faster than deterministic methods (like LAPACK's `dgesdd`) while maintaining high numerical accuracy for low-rank approximations.
 
-> **Original Research:** This library is the engineering implementation of the thesis *"Un algoritmo per il calcolo randomizzato della SVD"* (M. Fedrigo). You can read the full theoretical background in the [docs/thesis.pdf](./docs/thesis.pdf).
+> **Original Research:** This library is the engineering implementation of the thesis *"A Randomized Algorithm for SVD Calculation"* (M. Fedrigo). You can read the full theoretical background in the [docs/thesis.pdf](./docs/thesis.pdf).
 
 ---
 
@@ -24,10 +24,30 @@ It is designed to handle massive matrices efficiently by decomposing them into a
 
 ## 🛠 Installation
 
-This project adheres to **PEP 621** standards using `pyproject.toml`.
+To avoid conflicts with other projects or system packages, it is recommended to install this library within a **virtual environment**.
 
-### For Users
-To install the library in your environment:
+### 1. Create and Activate a Virtual Environment
+
+**Linux / macOS:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+
+```
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv venv
+.\venv\Scripts\activate
+
+```
+
+### 2. Install the Library
+
+Once the environment is active (you should see `(venv)` in your terminal), choose your installation mode:
+
+**For Users (Standard Usage):**
 
 ```bash
 git clone [https://github.com/massimofedrigo/randomized-svd.git](https://github.com/massimofedrigo/randomized-svd.git)
@@ -36,9 +56,8 @@ pip install .
 
 ```
 
-### For Developers
-
-To set up a development environment with testing and visualization tools (pytest, matplotlib, jupyter):
+**For Developers (Testing & Contributing):**
+This installs the package in *editable mode* along with testing tools (pytest, etc.).
 
 ```bash
 pip install -e ".[dev]"
@@ -117,7 +136,9 @@ randomized-svd/
 
 ## 🐳 Docker Support
 
-To ensure reproducibility across different machines, we provide a **Dockerfile**. This is useful for running tests in an isolated environment without polluting your local setup.
+To ensure reproducibility across different machines and operating systems, we provide a **Dockerfile**.
+
+> **Note:** Docker is primarily used here for running the **test suite** in an isolated, clean environment. For using the library in your own projects, the standard `pip install` (above) is recommended.
 
 **Build the image:**
 
@@ -153,10 +174,10 @@ docker run randomized-svd-test
 We use **pytest** for unit testing, covering:
 
 1. **Invariance:** Output dimensions match mathematical expectations.
-2. **Accuracy:** Reconstruction error on low-rank matrices is negligible ().
+2. **Accuracy:** Reconstruction error on low-rank matrices is negligible.
 3. **Orthogonality:**  and  matrices are verified to be orthogonal.
 
-Run tests locally:
+Run tests locally (requires dev installation):
 
 ```bash
 pytest -v
@@ -169,8 +190,8 @@ pytest -v
 
 1. **Fedrigo, M.** (2024). *Un algoritmo per il calcolo randomizzato della SVD*. [PDF Available](./docs/thesis.pdf).
 2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. *SIAM review*.
-3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is $4/\sqrt{3}$*.
-4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*. 
+3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is *.
+4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*.
 
 ---
 
@@ -178,6 +199,6 @@ pytest -v
 
 This project is licensed under the MIT License - see the [LICENSE](https://mit-license.org/) file for details.
 
-**Author:** Massimo Fedrigo
-
-**Contact:** massimo@massimofedrigo.com
+**Author:** Massimo Fedrigo\
+**Portfolio & Research:** [massimofedrigo.com](https://massimofedrigo.com)\
+**Contact:** contact@massimofedrigo.com

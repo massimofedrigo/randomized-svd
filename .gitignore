@@ -23,4 +23,3 @@ venv/
 
 # Testing
 .pytest_cache/
-dump.txt

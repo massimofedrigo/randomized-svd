@@ -16,10 +16,11 @@ It is designed to handle massive matrices efficiently by decomposing them into a
 ## 🚀 Key Features
 
 * **Smart Dispatching:** Automatically selects the optimal algorithm strategy for "Tall-and-Skinny" ($m \ge n$) vs "Short-and-Fat" ($m < n$) matrices to minimize memory footprint.
+* **Sparse Matrix Support:** Natively supports `scipy.sparse` matrices (CSR/CSC). It performs matrix multiplications without ever densifying the data, preventing RAM explosion on massive datasets.
 * **Automatic Denoising:** Includes an implementation of the **Gavish-Donoho** method for optimal hard thresholding.
 * **Robustness:** Uses internal **Oversampling** to ensure the target singular vectors are captured correctly, minimizing the probability of approximation errors.
 * **Production Ready:** Fully type-hinted, unit-tested, and packaged with modern standards (`pyproject.toml`).
-* **Zero-Bloat:** Core dependency is just **NumPy**. Visualization and testing tools are optional.
+* **Zero-Bloat:** Core dependencies are just **NumPy** and **SciPy**.
 
 ---
 
@@ -95,9 +96,9 @@ X = np.random.randn(1000, 500)
 # Compute rSVD with target rank k=10
 U, S, Vt = rsvd(X, t=10)
 
-print(f"U shape: {U.shape}")   # (1000, 10)
-print(f"S shape: {S.shape}")   # (10, 10)
-print(f"Vt shape: {Vt.shape}") # (10, 500)
+print(f"U shape: {U.shape}")    # (1000, 10)
+print(f"S shape: {S.shape}")    # (10, 10)
+print(f"Vt shape: {Vt.shape}")  # (10, 500)
 
 ```
 
@@ -122,7 +123,25 @@ X_clean = U @ S @ Vt
 
 ```
 
-### 3. High Accuracy Mode
+### 3. Sparse Matrices (Memory Efficient)
+
+For Recommender Systems or NLP, matrices are often huge but sparse. `rsvd` handles `scipy.sparse` objects directly, saving RAM.
+
+```python
+import scipy.sparse as sp
+from randomized_svd import rsvd
+
+# Create a massive 10k x 10k matrix with 1% density
+X_sparse = sp.rand(10000, 10000, density=0.01, format='csr')
+
+# Compute SVD directly (fast & memory efficient)
+U, S, Vt = rsvd(X_sparse, t=50)
+
+print(f"Computed {len(S)} singular values without OOM errors.")
+
+```
+
+### 4. High Accuracy Mode
 
 For matrices with slowly decaying singular values (flat spectrum), standard randomized projections might miss some information. You can improve accuracy using **Power Iterations (`p`)** and **Oversampling**.
 
@@ -140,9 +159,6 @@ X = np.random.randn(1000, 500)
 # - Power iterations p=2 (Recommended for slowly decaying spectra)
 # - Oversampling=20 (Compute 30 components internally, return best 10)
 U, S, Vt = rsvd(X, t=10, p=2, oversampling=20)
-
-# Output shape is strictly determined by 't', ignoring oversampling
-print(f"S shape: {S.shape}") # (10, 10)
 
 ```
 

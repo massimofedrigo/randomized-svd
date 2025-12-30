@@ -24,7 +24,8 @@ classifiers = [
 
 # Mandatory dependences (for /src/)
 dependencies = [
-    "numpy>=1.20.0" 
+    "numpy>=1.20.0",
+    "scipy>=1.7.0"
 ]
 
 # Optional dependences
@@ -32,10 +33,10 @@ dependencies = [
 dev = [
     "pytest",
     "build",
-    "scipy",
     "matplotlib",
     "pooch",
-    "jupyter"
+    "jupyter",
+    "mypy"
 ]
 
 [project.urls]
@@ -51,3 +52,13 @@ testpaths = [
 
 [tool.setuptools.package-data]
 "randomized_svd" = ["py.typed"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
+ignore_missing_imports = true

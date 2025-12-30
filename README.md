@@ -24,48 +24,57 @@ It is designed to handle massive matrices efficiently by decomposing them into a
 
 ## 🛠 Installation
 
-To avoid conflicts with other projects or system packages, it is recommended to install this library within a **virtual environment**.
+Choose the installation method based on your needs.
 
-### 1. Create and Activate a Virtual Environment
+### 📦 For Users (Standard Usage)
 
-Within your project root folder, run the following commands:
+If you just want to use the library in your own project:
 
-**Linux / macOS:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-
-```
-
-**Windows (PowerShell):**
-
-```powershell
-python -m venv venv
-.\venv\Scripts\activate
-
-```
-
-### 2. Install the Library
-
-Once the environment is active (you should see `(venv)` in your terminal), choose your installation mode:
-
-**For Users (Standard Usage):**
-Install directly from PyPI:
+1.  **Activate your project's virtual environment** (recommended).
+2.  **Install from PyPI:**
 
 ```bash
 pip install randomized-svd
 
 ```
 
-**For Developers (Testing & Contributing):**
-Clone the repository and install in *editable mode* to reflect code changes immediately.
+### 💻 For Developers (Contributing)
 
+If you want to run tests, modify the code, or contribute:
+
+1. **Clone the repository:**
 ```bash
-git clone [https://github.com/massimofedrigo/randomized-svd.git](https://github.com/massimofedrigo/randomized-svd.git)
+git clone https://github.com/massimofedrigo/randomized-svd.git
 cd randomized-svd
+
+```
+
+
+2. **Create and Activate a Virtual Environment:**
+*Linux / macOS:*
+```bash
+python3 -m venv venv
+source venv/bin/activate
+
+```
+
+
+*Windows (PowerShell):*
+```powershell
+python -m venv venv
+.\venv\Scripts\activate
+
+```
+
+
+3. **Install in Editable Mode:**
+This installs the package along with testing dependencies (`pytest`, etc.) and reflects code changes immediately.
+```bash
 pip install -e ".[dev]"
 
 ```
+
+
 
 ---
 
@@ -191,7 +200,7 @@ pytest -v
 
 ## 📚 References
 
-1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](./docs/thesis.pdf).
+1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](https://www.google.com/search?q=./docs/thesis.pdf).
 2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. *SIAM review*.
 3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is *.
 4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*.

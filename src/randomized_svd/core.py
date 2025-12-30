@@ -1,6 +1,7 @@
 import numpy as np
 
-def rsvd(X: np.ndarray, t: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+def rsvd(X: np.ndarray, t: int, p: int = 0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute the Randomized Singular Value Decomposition of a general matrix.
 
@@ -15,6 +16,11 @@ def rsvd(X: np.ndarray, t: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     t : int
         The target rank (projection dimension).
         Must be an integer satisfying 1 <= t <= min(m, n).
+    p : int, optional
+        Number of power iterations (default is 0).
+        Increasing this value improves the accuracy of the approximation
+        when the singular values decay slowly, at the cost of extra computation.
+        Common values are 1 or 2.
 
     Returns
     -------
@@ -28,119 +34,96 @@ def rsvd(X: np.ndarray, t: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     Raises
     ------
     TypeError
-        If parameter t is not an integer.
+        If parameter t or p is not an integer.
     ValueError
-        If t is out of the valid bounds [1, min(m, n)].
+        If t is out of the valid bounds [1, min(m, n)] or p < 0.
 
     References
     ----------
     .. [1] Brunton, S. L., & Kutz, J. N. (2019). Data-Driven Science and
            Engineering: Machine Learning, Dynamical Systems, and Control.
            Cambridge University Press, USA, 1st Edition.
+    .. [2] Halko, N., Martinsson, P. G., & Tropp, J. A. (2011). Finding structure
+           with randomness: Probabilistic algorithms for constructing approximate
+           matrix decompositions. SIAM review.
     """
     m, n = X.shape
 
     # 1. Type Validation
     if not isinstance(t, int):
         raise TypeError(f"Parameter t must be an integer, got {type(t).__name__}.")
+    if not isinstance(p, int):
+        raise TypeError(f"Parameter p must be an integer, got {type(p).__name__}.")
 
     # 2. Value Validation
     if t < 1 or t > min(m, n):
         raise ValueError(
             f"Parameter t={t} must be between 1 and min(m, n)={min(m, n)}."
         )
+    if p < 0:
+        raise ValueError(f"Parameter p must be non-negative, got {p}.")
 
     # 3. Dispatching Strategy
     if m >= n:
         # Optimization for Tall & Skinny matrices
-        return _rsvd_tall(X, t)
+        return _rsvd_tall(X, t, p)
     else:
         # Optimization for Short & Fat matrices
-        return _rsvd_wide(X, t)
+        return _rsvd_wide(X, t, p)
 
 
-def _rsvd_tall(X: np.ndarray, t: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _rsvd_tall(X: np.ndarray, t: int, p: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Implementation of Randomized SVD for square or tall-and-skinny matrices (m >= n).
-
-    Algorithm Steps:
-    1. Generate a Gaussian random projection matrix P.
-    2. Project X into a lower-dimensional subspace Z = X @ P.
-    3. Orthogonalize Z using QR decomposition to obtain Q.
-    4. Project X onto the orthogonal basis Q to obtain Y = Q.T @ X.
-    5. Compute deterministic SVD on the small matrix Y.
-    6. Reconstruct high-dimensional singular vectors U.
-
-    Parameters
-    ----------
-    X : np.ndarray
-        Input matrix of shape (m, n) where m >= n.
-    t : int
-        Target rank.
-
-    Returns
-    -------
-    U, S, Vt : tuple[np.ndarray, np.ndarray, np.ndarray]
-        The SVD components.
+    Includes Power Iterations for improved accuracy.
     """
     m, n = X.shape
 
     # 1. Random Projection
     # Generate random test matrix P (n x t)
     P = np.random.randn(n, t)
+
     # Sketch the column space of X
     Z = X @ P  # (m x t)
 
-    # 2. QR Decomposition
+    # 2. Power Iterations (Randomized Subspace Iteration)
+    # This step enhances the approximation accuracy for slowly decaying spectra.
+    # We apply the power scheme: Z = (X X.T)^p Z
+    # We include QR decomposition at each step to maintain numerical stability
+    # (orthogonality), as per Halko et al. (2011), Algo 4.4.
+    for _ in range(p):
+        # Move to the row space and orthogonalize
+        Z, _ = np.linalg.qr(X.T @ Z, mode='reduced')
+        # Move back to column space and orthogonalize
+        Z, _ = np.linalg.qr(X @ Z, mode='reduced')
+
+    # 3. QR Decomposition (Final orthonormal basis)
     # Form an orthonormal basis Q for the range of Z
     Q, _ = np.linalg.qr(Z, mode='reduced')  # Q is (m x t)
 
-    # 3. Orthogonal Projection
+    # 4. Orthogonal Projection
     # Project X into the low-rank subspace defined by Q
     Y = Q.T @ X  # (t x n)
 
-    # 4. Deterministic SVD on small matrix
+    # 5. Deterministic SVD on small matrix
     # Uy is (t x t), s is (t,), Vt is (t x n)
     Uy, s, Vt = np.linalg.svd(Y, full_matrices=False)
     S = np.diag(s)
 
-    # 5. Reconstruction
+    # 6. Reconstruction
     # Lift the left singular vectors back to the original space
     U = Q @ Uy  # (m x t)
 
     return U, S, Vt
 
 
-def _rsvd_wide(X: np.ndarray, t: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _rsvd_wide(X: np.ndarray, t: int, p: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Implementation of Randomized SVD for short-and-fat matrices (m < n).
-
-    This method avoids creating a large projection matrix by exploiting the
-    transpose property of SVD. It computes the SVD of X.T (which is tall)
-    and maps the results back to X.
-
-    Mathematical derivation:
-        If X = U * S * Vt
-        Then X.T = V * S * Ut
-        Let SVD(X.T) = U_hat * S_hat * Vt_hat
-        Mapping: U = Vt_hat.T, S = S_hat, Vt = U_hat.T
-
-    Parameters
-    ----------
-    X : np.ndarray
-        Input matrix of shape (m, n) where m < n.
-    t : int
-        Target rank.
-
-    Returns
-    -------
-    U, S, Vt : tuple[np.ndarray, np.ndarray, np.ndarray]
-        The SVD components mapped back to the original orientation.
     """
     # Compute Randomized SVD on the transpose (which is tall-and-skinny)
-    # U_trans corresponds to V of original X
-    # Vt_trans corresponds to U.T of original X
-    U_trans, S, Vt_trans = _rsvd_tall(X.T, t)
+    # Pass 'p' recursively to the underlying implementation
+    U_trans, S, Vt_trans = _rsvd_tall(X.T, t, p)
 
     # Map results back to original dimensions
     U = Vt_trans.T

@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 import pytest
 from randomized_svd import rsvd
 
@@ -220,3 +221,60 @@ class TestRSVDOversampling:
 
         # Error should decrease or stay same
         assert err1 <= err0
+
+
+class TestRSVDSparse:
+    """
+    Tests for SciPy sparse matrix support.
+    """
+
+    def test_sparse_execution_tall(self):
+        """Test rSVD works on Tall sparse matrices (Triggering CSC optimization)."""
+        m, n = 100, 50
+        density = 0.1
+        # Generate random sparse matrix
+        X = sp.rand(m, n, density=density, format='csr', random_state=42)
+
+        t = 10
+        U, S, Vt = rsvd(X, t=t)
+
+        assert U.shape == (m, t)
+        assert S.shape == (t, t)
+        assert Vt.shape == (t, n)
+
+    def test_sparse_execution_wide(self):
+        """Test rSVD works on Wide sparse matrices (Triggering CSR optimization)."""
+        m, n = 50, 100
+        density = 0.1
+        X = sp.rand(m, n, density=density, format='csc', random_state=42)
+
+        t = 10
+        U, S, Vt = rsvd(X, t=t)
+
+        assert U.shape == (m, t)
+        assert S.shape == (t, t)
+        assert Vt.shape == (t, n)
+
+    def test_sparse_vs_dense_consistency(self):
+        """
+        Ensures that passing a sparse matrix yields the IDENTICAL result
+        to passing its dense equivalent (given the same random seed).
+        """
+        m, n = 100, 80
+        t = 10
+
+        # Create Data
+        np.random.seed(42)
+        X_dense = np.random.randn(m, n)
+        X_sparse = sp.csr_matrix(X_dense)
+
+        # 1. Run Dense (Reset seed right before to ensure P matrix is same)
+        np.random.seed(99)
+        _, S_dense, _ = rsvd(X_dense, t=t)
+
+        # 2. Run Sparse (Reset seed right before)
+        np.random.seed(99)
+        _, S_sparse, _ = rsvd(X_sparse, t=t)
+
+        # Singular values must be identical
+        np.testing.assert_allclose(S_dense, S_sparse, atol=1e-10)

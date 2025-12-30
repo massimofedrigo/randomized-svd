@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse as sp
-import pytest
 from sklearn.decomposition import PCA
 from randomized_svd import rpca
 

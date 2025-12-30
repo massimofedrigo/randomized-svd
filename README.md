@@ -16,8 +16,9 @@ It is designed to handle massive matrices efficiently by decomposing them into a
 ## 🚀 Key Features
 
 * **Smart Dispatching:** Automatically selects the optimal algorithm strategy for "Tall-and-Skinny" ($m \ge n$) vs "Short-and-Fat" ($m < n$) matrices to minimize memory footprint.
+* **Randomized PCA (New):** Performs Principal Component Analysis with **Virtual Centering**. It computes PCA on sparse matrices without ever materializing the dense centered matrix ($X - \mu$), saving gigabytes of RAM.
 * **Scikit-Learn Compatible:** Features a `RandomizedSVD` class wrapper that acts as a drop-in replacement for `TruncatedSVD`. Works natively with **Pipelines** and **GridSearchCV**.
-* **Sparse Matrix Support:** Natively supports `scipy.sparse` matrices (CSR/CSC). It performs matrix multiplications without ever densifying the data, preventing RAM explosion on massive datasets.
+* **Sparse Matrix Support:** Natively supports `scipy.sparse` matrices (CSR/CSC). It performs matrix multiplications without ever densifying the data.
 * **Automatic Denoising:** Includes an implementation of the **Gavish-Donoho** method for optimal hard thresholding.
 * **Robustness:** Uses internal **Oversampling** to ensure the target singular vectors are captured correctly, minimizing the probability of approximation errors.
 * **Production Ready:** Fully type-hinted, unit-tested, and packaged with modern standards (`pyproject.toml`).
@@ -182,6 +183,23 @@ X_reduced = pipeline.fit_transform(X)
 
 ```
 
+### 6. Randomized PCA (Virtual Centering)
+
+Perform PCA on sparse data without centering explicitly (which would destroy sparsity). `rpca` handles this automatically.
+
+```python
+import scipy.sparse as sp
+from randomized_svd import rpca
+
+# Sparse matrix with non-zero mean
+X_sparse = sp.rand(1000, 1000, density=0.01, format='csr')
+
+# Compute PCA directly
+# This avoids creating the dense (X - mean) matrix in memory
+U, S, Vt = rpca(X_sparse, t=10)
+
+```
+
 ---
 
 ## 🏗 Project Structure
@@ -197,6 +215,7 @@ randomized-svd/
 │   └── randomized_svd/   # Package source
 │       ├── __init__.py
 │       ├── core.py       # Main rSVD logic (Facade & Implementations)
+│       ├── pca.py        # Randomized PCA & Virtual Centering
 │       ├── sklearn.py    # Scikit-Learn Wrapper
 │       └── utils.py      # Math helpers (Gavish-Donoho threshold)
 ├── tests/                # Pytest suite

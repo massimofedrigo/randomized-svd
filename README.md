@@ -121,6 +121,27 @@ X_clean = U @ S @ Vt
 
 ```
 
+### 3. Power Iterations
+
+Use power iterations to improve the accuracy of the randomized decomposition, especially when the singular values of the input matrix decay slowly.
+
+```python
+import numpy as np
+from randomized_svd import rsvd, optimal_threshold
+
+# Generate a large random matrix (1000 x 500)
+X = np.random.randn(1000, 500)
+
+# Compute rSVD with target rank t=10 and power iterations p=3
+U, S, Vt = rsvd(X, t=10, p=3)
+
+print(f"U shape: {U.shape}")   # (1000, 10)
+print(f"S shape: {S.shape}")   # (10, 10)
+print(f"Vt shape: {Vt.shape}") # (10, 500)
+
+```
+
+
 ---
 
 ## 🏗 Project Structure
@@ -200,9 +221,9 @@ pytest -v
 
 ## 📚 References
 
-1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](https://www.google.com/search?q=./docs/thesis.pdf).
+1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](./docs/thesis.pdf).
 2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. *SIAM review*.
-3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is *.
+3. **Gavish, M., & Donoho, D. L.** (2014). *"The optimal hard threshold for singular values is $4/\sqrt{3}$"*.
 4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*.
 
 ---

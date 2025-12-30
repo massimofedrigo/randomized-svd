@@ -82,6 +82,11 @@ class TestRSVDInputValidation:
         with pytest.raises(ValueError, match="Parameter p must be non-negative"):
             rsvd(X, t=5, p=-1)
 
+    def test_negative_oversampling(self):
+        X = np.zeros((10, 10))
+        with pytest.raises(ValueError, match="oversampling"):
+            rsvd(X, t=5, oversampling=-1)
+
 
 class TestRSVDDispatchAndShapes:
     """
@@ -104,6 +109,23 @@ class TestRSVDDispatchAndShapes:
         assert S.shape == (t, t)
         assert Vt.shape == (t, n)
 
+    def test_oversampling_does_not_affect_output_shape(self, random_matrix_generator):
+        """
+        If I ask for t=10 with oversampling=20, I should still get exactly 10 components,
+        not 30. The truncation must happen internally.
+        """
+        m, n = 100, 80
+        t = 10
+        oversampling = 20  # Huge buffer
+        X = random_matrix_generator(m, n)
+
+        U, S, Vt = rsvd(X, t=t, oversampling=oversampling)
+
+        # Output must match 't', ignoring the internal oversampling
+        assert U.shape == (m, t)
+        assert S.shape == (t, t)
+        assert Vt.shape == (t, n)
+
 
 class TestRSVDMathematics:
     """
@@ -120,6 +142,21 @@ class TestRSVDMathematics:
 
         error = np.linalg.norm(X - X_approx) / np.linalg.norm(X)
         assert error < 1e-10
+
+    def test_orthogonality(self, random_matrix_generator):
+        """
+        U and Vt must be orthonormal matrices.
+        U.T @ U = I
+        Vt @ Vt.T = I
+        """
+        X = random_matrix_generator(50, 30)
+        t = 5
+        U, _, Vt = rsvd(X, t=t)
+
+        # Check U orthogonality
+        np.testing.assert_allclose(U.T @ U, np.eye(t), atol=1e-10, err_msg="U not orthogonal")
+        # Check Vt orthogonality
+        np.testing.assert_allclose(Vt @ Vt.T, np.eye(t), atol=1e-10, err_msg="Vt not orthogonal")
 
 
 class TestRSVDPowerIterations:
@@ -157,3 +194,29 @@ class TestRSVDPowerIterations:
 
         # Should run without errors
         rsvd(X, t=10, p=2)
+
+
+class TestRSVDOversampling:
+    """
+    Specific tests for the effect of Oversampling.
+    """
+
+    def test_accuracy_improvement_with_oversampling(self, random_matrix_generator):
+        """
+        Oversampling should generally improve or maintain accuracy compared to 0 oversampling.
+        We test on a random matrix where the spectrum is not perfectly clean.
+        """
+        m, n = 100, 100
+        X = random_matrix_generator(m, n)
+        t = 10
+
+        # Case A: No oversampling
+        U0, S0, Vt0 = rsvd(X, t=t, oversampling=0)
+        err0 = np.linalg.norm(X - U0 @ S0 @ Vt0)
+
+        # Case B: High oversampling
+        U1, S1, Vt1 = rsvd(X, t=t, oversampling=20)
+        err1 = np.linalg.norm(X - U1 @ S1 @ Vt1)
+
+        # Error should decrease or stay same
+        assert err1 <= err0

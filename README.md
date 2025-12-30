@@ -16,11 +16,11 @@ It is designed to handle massive matrices efficiently by decomposing them into a
 ## 🚀 Key Features
 
 * **Smart Dispatching:** Automatically selects the optimal algorithm strategy for "Tall-and-Skinny" ($m \ge n$) vs "Short-and-Fat" ($m < n$) matrices to minimize memory footprint.
+* **Scikit-Learn Compatible:** Features a `RandomizedSVD` class wrapper that acts as a drop-in replacement for `TruncatedSVD`. Works natively with **Pipelines** and **GridSearchCV**.
 * **Sparse Matrix Support:** Natively supports `scipy.sparse` matrices (CSR/CSC). It performs matrix multiplications without ever densifying the data, preventing RAM explosion on massive datasets.
 * **Automatic Denoising:** Includes an implementation of the **Gavish-Donoho** method for optimal hard thresholding.
 * **Robustness:** Uses internal **Oversampling** to ensure the target singular vectors are captured correctly, minimizing the probability of approximation errors.
 * **Production Ready:** Fully type-hinted, unit-tested, and packaged with modern standards (`pyproject.toml`).
-* **Zero-Bloat:** Core dependencies are just **NumPy** and **SciPy**.
 
 ---
 
@@ -162,6 +162,26 @@ U, S, Vt = rsvd(X, t=10, p=2, oversampling=20)
 
 ```
 
+### 5. Scikit-Learn API (Pipelines & GridSearch)
+
+Use the `RandomizedSVD` class to integrate seamlessly with Scikit-Learn pipelines.
+
+```python
+from randomized_svd import RandomizedSVD
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
+# Create a pipeline: Scale data -> Reduce Dimensions
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('rsvd', RandomizedSVD(n_components=10, random_state=42))
+])
+
+# Fit and Transform in one go
+X_reduced = pipeline.fit_transform(X)
+
+```
+
 ---
 
 ## 🏗 Project Structure
@@ -177,6 +197,7 @@ randomized-svd/
 │   └── randomized_svd/   # Package source
 │       ├── __init__.py
 │       ├── core.py       # Main rSVD logic (Facade & Implementations)
+│       ├── sklearn.py    # Scikit-Learn Wrapper
 │       └── utils.py      # Math helpers (Gavish-Donoho threshold)
 ├── tests/                # Pytest suite
 ├── Dockerfile            # Reproducible testing environment
@@ -241,7 +262,7 @@ pytest -v
 
 ## 📚 References
 
-1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](./docs/thesis.pdf).
+1. **Fedrigo, M.** (2024). *A Randomized Algorithm for SVD Calculation*. [PDF Available](https://massimofedrigo.com/thesis_eng.pdf).
 2. **Halko, N., Martinsson, P. G., & Tropp, J. A.** (2011). *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. *SIAM review*.
 3. **Gavish, M., & Donoho, D. L.** (2014). *The optimal hard threshold for singular values is $4/\sqrt{3}$*.
 4. **Brunton, S. L., & Kutz, N. J.** (2019). *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*.

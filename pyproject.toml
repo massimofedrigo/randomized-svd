@@ -25,7 +25,8 @@ classifiers = [
 # Mandatory dependences (for /src/)
 dependencies = [
     "numpy>=1.20.0",
-    "scipy>=1.7.0"
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0"
 ]
 
 # Optional dependences
@@ -61,4 +62,8 @@ disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "scipy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sklearn.*"
 ignore_missing_imports = true

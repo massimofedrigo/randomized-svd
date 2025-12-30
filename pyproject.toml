@@ -30,10 +30,12 @@ dependencies = [
 # Optional dependences
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "matplotlib>=3.5",
-    "jupyter>=1.0",
-    "scipy>=1.7"  # Serve per caricare immagini di test o benchmark
+    "pytest",
+    "build",
+    "scipy",
+    "matplotlib",
+    "pooch",
+    "jupyter"
 ]
 
 [project.urls]

@@ -46,3 +46,6 @@ addopts = "-ra -q"
 testpaths = [
     "tests",
 ]
+
+[tool.setuptools.package-data]
+"randomized_svd" = ["py.typed"]

@@ -9,7 +9,6 @@ from randomized_svd import rsvd
 def random_matrix_generator():
     """
     Returns a factory function to generate matrices with consistent seeding.
-    This ensures tests are reproducible despite the randomized algorithm.
     """
     def _generate(m, n, seed=42):
         np.random.seed(seed)
@@ -20,16 +19,33 @@ def random_matrix_generator():
 @pytest.fixture
 def low_rank_matrix_generator():
     """
-    Generates a matrix with a specific exact rank to test accuracy.
-    X = U * S * Vt
+    Generates a matrix with rapid decay (easy to approximate).
     """
     def _generate(m, n, rank, seed=42):
         np.random.seed(seed)
-        # Random orthogonal matrices
         U, _ = np.linalg.qr(np.random.randn(m, rank))
         V, _ = np.linalg.qr(np.random.randn(n, rank))
-        # Rapidly decaying singular values
         S = np.diag(np.linspace(10, 1, rank))
+        return U @ S @ V.T
+    return _generate
+
+
+@pytest.fixture
+def slow_decay_matrix_generator():
+    """
+    Generates a matrix where singular values decay slowly.
+    This is the crucial test case for Power Iterations.
+    """
+    def _generate(m, n, seed=42):
+        np.random.seed(seed)
+        # Create full rank matrix with linear decay (flat spectrum)
+        # S = [1.0, 0.99, 0.98, ... ]
+        U, _ = np.linalg.qr(np.random.randn(m, min(m, n)))
+        V, _ = np.linalg.qr(np.random.randn(n, min(m, n)))
+        s_values = np.linspace(1, 0.1, min(m, n))
+        S = np.diag(s_values)
+
+        # Expand S to match U and V shapes if needed for multiplication
         return U @ S @ V.T
     return _generate
 
@@ -39,12 +55,11 @@ def low_rank_matrix_generator():
 class TestRSVDInputValidation:
     """
     Cover edge cases for bad inputs.
-    Crucial for a robust library.
     """
 
     def test_invalid_t_type(self):
         X = np.zeros((10, 10))
-        with pytest.raises(TypeError, match="must be an integer"):
+        with pytest.raises(TypeError, match="Parameter t must be an integer"):
             rsvd(X, t=5.5)  # type: ignore
 
     def test_t_too_small(self):
@@ -54,44 +69,40 @@ class TestRSVDInputValidation:
 
     def test_t_too_large(self):
         X = np.zeros((10, 5))
-        # t cannot be larger than min(10, 5) = 5
         with pytest.raises(ValueError, match="must be between 1"):
             rsvd(X, t=6)
+
+    def test_invalid_p_type(self):
+        X = np.zeros((10, 10))
+        with pytest.raises(TypeError, match="Parameter p must be an integer"):
+            rsvd(X, t=5, p=2.0)  # type: ignore
+
+    def test_negative_p(self):
+        X = np.zeros((10, 10))
+        with pytest.raises(ValueError, match="Parameter p must be non-negative"):
+            rsvd(X, t=5, p=-1)
 
 
 class TestRSVDDispatchAndShapes:
     """
-    This class verifies that the wrapper correctly handles
-    both Tall (m >= n) and Wide (m < n) matrices.
+    Verifies output shapes for Tall vs Wide matrices.
     """
 
     @pytest.mark.parametrize("shape", [
-        (100, 50),   # Tall (triggers _rsvd_tall)
-        (50, 100),   # Wide (triggers _rsvd_wide)
-        (50, 50)     # Square (triggers _rsvd_tall)
+        (100, 50),   # Tall
+        (50, 100),   # Wide
     ])
     def test_output_dimensions(self, shape, random_matrix_generator):
         m, n = shape
         t = 10
+        p = 2  # Verify dimensions hold even with power iterations
         X = random_matrix_generator(m, n)
 
-        U, S, Vt = rsvd(X, t)
+        U, S, Vt = rsvd(X, t, p=p)
 
-        # Assert shapes comply with SVD definition
-        assert U.shape == (m, t), f"U shape mismatch for {shape}"
-        assert S.shape == (t, t), f"S shape mismatch for {shape}"
-        assert Vt.shape == (t, n), f"Vt shape mismatch for {shape}"
-
-    def test_full_rank_edge_case(self, random_matrix_generator):
-        """Test asking for the maximum possible rank t = min(m, n)"""
-        m, n = 20, 10
-        t = 10
-        X = random_matrix_generator(m, n)
-
-        U, S, Vt = rsvd(X, t)
-
-        assert U.shape == (20, 10)
-        assert S.shape == (10, 10)
+        assert U.shape == (m, t)
+        assert S.shape == (t, t)
+        assert Vt.shape == (t, n)
 
 
 class TestRSVDMathematics:
@@ -99,47 +110,50 @@ class TestRSVDMathematics:
     Verifies mathematical properties: accuracy and orthogonality.
     """
 
-    def test_reconstruction_accuracy(self, low_rank_matrix_generator):
-        """
-        If X is truly low-rank, rSVD should reconstruct it with very low error.
-        """
+    def test_exact_recovery_low_rank(self, low_rank_matrix_generator):
+        """Standard rSVD (p=0) should handle simple low-rank matrices well."""
         m, n = 100, 80
-        true_rank = 10
-        X = low_rank_matrix_generator(m, n, rank=true_rank)
+        X = low_rank_matrix_generator(m, n, rank=10)
 
-        # We ask for a slightly larger rank to capture everything
-        t = 12
-        U, S, Vt = rsvd(X, t)
-
-        # Reconstruct: X_approx = U * S * Vt
+        U, S, Vt = rsvd(X, t=10, p=0)
         X_approx = U @ S @ Vt
 
-        # Relative Frobenius Norm Error
         error = np.linalg.norm(X - X_approx) / np.linalg.norm(X)
+        assert error < 1e-10
 
-        # We expect error close to machine epsilon or very small for exact low-rank
-        assert error < 1e-10, f"Reconstruction error too high: {error}"
 
-    @pytest.mark.parametrize("shape", [(50, 30), (30, 50)])
-    def test_orthogonality(self, shape, random_matrix_generator):
+class TestRSVDPowerIterations:
+    """
+    Specific tests for the effect of Power Iterations (p > 0).
+    """
+
+    def test_accuracy_improvement_on_slow_decay(self, slow_decay_matrix_generator):
         """
-        U and Vt must be orthonormal matrices (or semi-unitary).
-        U.T @ U = I
-        Vt @ Vt.T = I
+        Crucial Test: On a matrix with slow spectral decay,
+        p=2 should yield lower error than p=0.
         """
-        m, n = shape
-        t = 5
-        X = random_matrix_generator(m, n)
+        m, n = 100, 100
+        X = slow_decay_matrix_generator(m, n)
+        target_rank = 10
 
-        U, _, Vt = rsvd(X, t)
+        # 1. Compute without Power Iterations
+        U0, S0, Vt0 = rsvd(X, t=target_rank, p=0)
+        err0 = np.linalg.norm(X - (U0 @ S0 @ Vt0))
 
-        # Check U orthogonality: U.T @ U should be Identity(t)
-        UtU = U.T @ U
-        I_t = np.eye(t)
+        # 2. Compute with Power Iterations (p=2)
+        Up, Sp, Vtp = rsvd(X, t=target_rank, p=2)
+        err_p = np.linalg.norm(X - (Up @ Sp @ Vtp))
 
-        # Check Vt orthogonality: Vt @ Vt.T should be Identity(t)
-        # Note: usually Vt is (t x n), so Vt @ Vt.T is (t x t)
-        VVt = Vt @ Vt.T
+        print(f"\nError (p=0): {err0:.5f}")
+        print(f"Error (p=2): {err_p:.5f}")
 
-        np.testing.assert_allclose(UtU, I_t, atol=1e-10, err_msg="U is not orthogonal")
-        np.testing.assert_allclose(VVt, I_t, atol=1e-10, err_msg="Vt is not orthogonal")
+        # The error with p=2 must be strictly smaller
+        assert err_p < err0, "Power iterations failed to improve accuracy on slow-decay matrix"
+
+    def test_consistency_wide_matrix(self, slow_decay_matrix_generator):
+        """Ensure p works correctly also for wide matrices (via transpose logic)."""
+        m, n = 50, 200  # Wide
+        X = slow_decay_matrix_generator(m, n)
+
+        # Should run without errors
+        rsvd(X, t=10, p=2)

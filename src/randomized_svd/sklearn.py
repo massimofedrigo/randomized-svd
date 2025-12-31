@@ -1,6 +1,6 @@
 import numpy as np
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import check_is_fitted, check_array, check_random_state
+from sklearn.base import BaseEstimator, TransformerMixin  # type: ignore[import-untyped]
+from sklearn.utils.validation import check_is_fitted, check_array, check_random_state  # type: ignore[import-untyped]
 from typing import Optional, Union, Any, cast
 from .core import rsvd
 

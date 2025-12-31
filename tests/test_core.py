@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
-from typing import Callable, Tuple, Any, cast
+from typing import Callable, Tuple, cast
 from randomized_svd import rsvd
 
 

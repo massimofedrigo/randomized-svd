@@ -72,8 +72,10 @@ module = "scipy.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "sklearn.*"
+module = ["sklearn", "sklearn.*"]
 ignore_missing_imports = true
+follow_imports = "skip"
+disable_error_code = ["import-untyped"]
 
 [[tool.mypy.overrides]]
 module = ["pytest", "_pytest.*"]

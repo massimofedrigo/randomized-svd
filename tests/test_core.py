@@ -1,43 +1,44 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+from typing import Callable, Tuple, Any, cast
 from randomized_svd import rsvd
 
 
 # --- Fixtures & Helpers ---
 
 @pytest.fixture
-def random_matrix_generator():
+def random_matrix_generator() -> Callable[[int, int, int], np.ndarray]:
     """
     Returns a factory function to generate matrices with consistent seeding.
     """
-    def _generate(m, n, seed=42):
+    def _generate(m: int, n: int, seed: int = 42) -> np.ndarray:
         np.random.seed(seed)
-        return np.random.randn(m, n)
+        return cast(np.ndarray, np.random.randn(m, n))
     return _generate
 
 
 @pytest.fixture
-def low_rank_matrix_generator():
+def low_rank_matrix_generator() -> Callable[[int, int, int, int], np.ndarray]:
     """
     Generates a matrix with rapid decay (easy to approximate).
     """
-    def _generate(m, n, rank, seed=42):
+    def _generate(m: int, n: int, rank: int, seed: int = 42) -> np.ndarray:
         np.random.seed(seed)
         U, _ = np.linalg.qr(np.random.randn(m, rank))
         V, _ = np.linalg.qr(np.random.randn(n, rank))
         S = np.diag(np.linspace(10, 1, rank))
-        return U @ S @ V.T
+        return cast(np.ndarray, U @ S @ V.T)
     return _generate
 
 
 @pytest.fixture
-def slow_decay_matrix_generator():
+def slow_decay_matrix_generator() -> Callable[[int, int, int], np.ndarray]:
     """
     Generates a matrix where singular values decay slowly.
     This is the crucial test case for Power Iterations.
     """
-    def _generate(m, n, seed=42):
+    def _generate(m: int, n: int, seed: int = 42) -> np.ndarray:
         np.random.seed(seed)
         # Create full rank matrix with linear decay (flat spectrum)
         # S = [1.0, 0.99, 0.98, ... ]
@@ -47,7 +48,7 @@ def slow_decay_matrix_generator():
         S = np.diag(s_values)
 
         # Expand S to match U and V shapes if needed for multiplication
-        return U @ S @ V.T
+        return cast(np.ndarray, U @ S @ V.T)
     return _generate
 
 
@@ -58,32 +59,32 @@ class TestRSVDInputValidation:
     Cover edge cases for bad inputs.
     """
 
-    def test_invalid_t_type(self):
+    def test_invalid_t_type(self) -> None:
         X = np.zeros((10, 10))
         with pytest.raises(TypeError, match="Parameter t must be an integer"):
             rsvd(X, t=5.5)  # type: ignore
 
-    def test_t_too_small(self):
+    def test_t_too_small(self) -> None:
         X = np.zeros((10, 10))
         with pytest.raises(ValueError, match="must be between 1"):
             rsvd(X, t=0)
 
-    def test_t_too_large(self):
+    def test_t_too_large(self) -> None:
         X = np.zeros((10, 5))
         with pytest.raises(ValueError, match="must be between 1"):
             rsvd(X, t=6)
 
-    def test_invalid_p_type(self):
+    def test_invalid_p_type(self) -> None:
         X = np.zeros((10, 10))
         with pytest.raises(TypeError, match="Parameter p must be an integer"):
             rsvd(X, t=5, p=2.0)  # type: ignore
 
-    def test_negative_p(self):
+    def test_negative_p(self) -> None:
         X = np.zeros((10, 10))
         with pytest.raises(ValueError, match="Parameter p must be non-negative"):
             rsvd(X, t=5, p=-1)
 
-    def test_negative_oversampling(self):
+    def test_negative_oversampling(self) -> None:
         X = np.zeros((10, 10))
         with pytest.raises(ValueError, match="oversampling"):
             rsvd(X, t=5, oversampling=-1)
@@ -98,7 +99,7 @@ class TestRSVDDispatchAndShapes:
         (100, 50),   # Tall
         (50, 100),   # Wide
     ])
-    def test_output_dimensions(self, shape, random_matrix_generator):
+    def test_output_dimensions(self, shape: Tuple[int, int], random_matrix_generator: Callable) -> None:
         m, n = shape
         t = 10
         p = 2  # Verify dimensions hold even with power iterations
@@ -110,7 +111,7 @@ class TestRSVDDispatchAndShapes:
         assert S.shape == (t, t)
         assert Vt.shape == (t, n)
 
-    def test_oversampling_does_not_affect_output_shape(self, random_matrix_generator):
+    def test_oversampling_does_not_affect_output_shape(self, random_matrix_generator: Callable) -> None:
         """
         If I ask for t=10 with oversampling=20, I should still get exactly 10 components,
         not 30. The truncation must happen internally.
@@ -133,7 +134,7 @@ class TestRSVDMathematics:
     Verifies mathematical properties: accuracy and orthogonality.
     """
 
-    def test_exact_recovery_low_rank(self, low_rank_matrix_generator):
+    def test_exact_recovery_low_rank(self, low_rank_matrix_generator: Callable) -> None:
         """Standard rSVD (p=0) should handle simple low-rank matrices well."""
         m, n = 100, 80
         X = low_rank_matrix_generator(m, n, rank=10)
@@ -144,7 +145,7 @@ class TestRSVDMathematics:
         error = np.linalg.norm(X - X_approx) / np.linalg.norm(X)
         assert error < 1e-10
 
-    def test_orthogonality(self, random_matrix_generator):
+    def test_orthogonality(self, random_matrix_generator: Callable) -> None:
         """
         U and Vt must be orthonormal matrices.
         U.T @ U = I
@@ -165,7 +166,7 @@ class TestRSVDPowerIterations:
     Specific tests for the effect of Power Iterations (p > 0).
     """
 
-    def test_accuracy_improvement_on_slow_decay(self, slow_decay_matrix_generator):
+    def test_accuracy_improvement_on_slow_decay(self, slow_decay_matrix_generator: Callable) -> None:
         """
         Crucial Test: On a matrix with slow spectral decay,
         p=2 should yield lower error than p=0.
@@ -188,7 +189,7 @@ class TestRSVDPowerIterations:
         # The error with p=2 must be strictly smaller
         assert err_p < err0, "Power iterations failed to improve accuracy on slow-decay matrix"
 
-    def test_consistency_wide_matrix(self, slow_decay_matrix_generator):
+    def test_consistency_wide_matrix(self, slow_decay_matrix_generator: Callable) -> None:
         """Ensure p works correctly also for wide matrices (via transpose logic)."""
         m, n = 50, 200  # Wide
         X = slow_decay_matrix_generator(m, n)
@@ -202,7 +203,7 @@ class TestRSVDOversampling:
     Specific tests for the effect of Oversampling.
     """
 
-    def test_accuracy_improvement_with_oversampling(self, random_matrix_generator):
+    def test_accuracy_improvement_with_oversampling(self, random_matrix_generator: Callable) -> None:
         """
         Oversampling should generally improve or maintain accuracy compared to 0 oversampling.
         We test on a random matrix where the spectrum is not perfectly clean.
@@ -228,7 +229,7 @@ class TestRSVDSparse:
     Tests for SciPy sparse matrix support.
     """
 
-    def test_sparse_execution_tall(self):
+    def test_sparse_execution_tall(self) -> None:
         """Test rSVD works on Tall sparse matrices (Triggering CSC optimization)."""
         m, n = 100, 50
         density = 0.1
@@ -242,7 +243,7 @@ class TestRSVDSparse:
         assert S.shape == (t, t)
         assert Vt.shape == (t, n)
 
-    def test_sparse_execution_wide(self):
+    def test_sparse_execution_wide(self) -> None:
         """Test rSVD works on Wide sparse matrices (Triggering CSR optimization)."""
         m, n = 50, 100
         density = 0.1
@@ -255,7 +256,7 @@ class TestRSVDSparse:
         assert S.shape == (t, t)
         assert Vt.shape == (t, n)
 
-    def test_sparse_vs_dense_consistency(self):
+    def test_sparse_vs_dense_consistency(self) -> None:
         """
         Ensures that passing a sparse matrix yields the IDENTICAL result
         to passing its dense equivalent (given the same random seed).

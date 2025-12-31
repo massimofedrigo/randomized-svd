@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from typing import cast
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import NotFittedError
@@ -9,10 +10,10 @@ from randomized_svd import RandomizedSVD
 # --- Fixtures ---
 
 @pytest.fixture
-def random_data():
+def random_data() -> np.ndarray:
     """Generates a consistent random matrix for testing."""
     np.random.seed(42)
-    return np.random.randn(100, 20)
+    return cast(np.ndarray, np.random.randn(100, 20))
 
 
 # --- Test Suite ---
@@ -22,7 +23,7 @@ class TestSklearnAPI:
     Tests for the Scikit-Learn wrapper (RandomizedSVD class).
     """
 
-    def test_sklearn_standard_attributes(self):
+    def test_sklearn_standard_attributes(self) -> None:
         """Verifies that the class follows sklearn naming conventions."""
         model = RandomizedSVD()
         assert hasattr(model, "fit")
@@ -30,7 +31,7 @@ class TestSklearnAPI:
         assert hasattr(model, "get_params")
         assert hasattr(model, "set_params")
 
-    def test_input_validation(self):
+    def test_input_validation(self) -> None:
         """Ensures bad inputs raise appropriate errors (Sad Paths)."""
         model = RandomizedSVD(n_components=5)
 
@@ -45,7 +46,7 @@ class TestSklearnAPI:
         with pytest.raises(ValueError):
             model.fit(X_tiny)
 
-    def test_integration_pipeline(self, random_data):
+    def test_integration_pipeline(self, random_data: np.ndarray) -> None:
         """Test that RandomizedSVD works inside a Scikit-Learn Pipeline."""
         X = random_data
         y = np.random.randint(0, 2, 100)  # Fake labels
@@ -61,7 +62,7 @@ class TestSklearnAPI:
 
         assert X_transformed.shape == (100, 5)
 
-    def test_reproducibility(self, random_data):
+    def test_reproducibility(self, random_data: np.ndarray) -> None:
         """Test that setting random_state produces identical results."""
         X = random_data
 
@@ -73,7 +74,7 @@ class TestSklearnAPI:
 
         np.testing.assert_allclose(X1, X2, err_msg="Results are not reproducible despite fixed seed")
 
-    def test_inverse_transform(self):
+    def test_inverse_transform(self) -> None:
         """Test accurate reconstruction (inverse_transform)."""
         # Create simple low rank data
         np.random.seed(42)

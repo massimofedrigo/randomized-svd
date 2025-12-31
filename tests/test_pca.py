@@ -6,7 +6,7 @@ from randomized_svd import rpca
 
 class TestRandomizedPCA:
 
-    def test_compare_with_sklearn_dense(self):
+    def test_compare_with_sklearn_dense(self) -> None:
         """
         Verify rpca produces same singular values as sklearn PCA (on dense data).
         """
@@ -18,7 +18,7 @@ class TestRandomizedPCA:
         # 1. Run our rPCA
         # Fix seeds internally? rSVD uses np.random. 
         np.random.seed(99)
-        U, S, Vt = rpca(X, t=t)
+        U, S, Vt = rpca(X, t=t, p=2)  # X is pure noise, let us fix singular value decay
 
         # 2. Run Sklearn PCA
         # Sklearn PCA uses centered SVD internally. 
@@ -31,7 +31,7 @@ class TestRandomizedPCA:
         # Allow small tolerance due to randomized nature
         np.testing.assert_allclose(S, pca_sk.singular_values_, rtol=0.1)
 
-    def test_sparse_matrix_support(self):
+    def test_sparse_matrix_support(self) -> None:
         """
         Verify rpca works on sparse matrices (Virtual Centering).
         If implementation was naive (X - mu), this would likely fail or be slow 
@@ -50,7 +50,7 @@ class TestRandomizedPCA:
         assert S.shape == (t,)
         assert Vt.shape == (t, n)
 
-    def test_virtual_centering_logic(self):
+    def test_virtual_centering_logic(self) -> None:
         """
         Internal test for the CenteredMatrix class logic.
         Checks if A_virtual @ v == (A_dense - mu) @ v

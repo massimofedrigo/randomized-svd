@@ -136,5 +136,5 @@ def rpca(
     # 3. Randomized SVD on the virtual matrix
     # rsvd is compatible with LinearOperator thanks to duck-typing (@ operator)
     U, S, Vt = rsvd(X_centered, t, p=p, oversampling=oversampling)
-
-    return U, S, Vt
+    # S is a diagonal matrix, must be converted in 1D array
+    return U, np.diag(S), Vt

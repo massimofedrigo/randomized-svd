@@ -59,11 +59,25 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+exclude = [
+    "venv",
+    ".venv",
+    "testsvenv",
+    "build",
+    "dist"
+]
 
 [[tool.mypy.overrides]]
 module = "scipy.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "sklearn.*"
+module = ["sklearn", "sklearn.*"]
 ignore_missing_imports = true
+follow_imports = "skip"
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = ["pytest", "_pytest.*"]
+ignore_missing_imports = true
+follow_imports = "skip"

@@ -19,7 +19,7 @@ It is designed to handle massive matrices efficiently by decomposing them into a
 * **Randomized PCA (New):** Performs Principal Component Analysis with **Virtual Centering**. It computes PCA on sparse matrices without ever materializing the dense centered matrix ($X - \mu$), saving gigabytes of RAM.
 * **Scikit-Learn Compatible:** Features a `RandomizedSVD` class wrapper that acts as a drop-in replacement for `TruncatedSVD`. Works natively with **Pipelines** and **GridSearchCV**.
 * **Sparse Matrix Support:** Natively supports `scipy.sparse` matrices (CSR/CSC). It performs matrix multiplications without ever densifying the data.
-* **Automatic Denoising:** Includes an implementation of the **Gavish-Donoho** method for optimal hard thresholding.
+* **Automatic Denoising:** Includes an implementation of the **Gavish-Donoho** method for optimal hard thresholding. Unlike basic heuristics, it solves the **Marchenko-Pastur** integral numerically to find the optimal rank, supporting both known noise levels (`sigma`) and **automatic noise estimation**.
 * **Robustness:** Uses internal **Oversampling** to ensure the target singular vectors are captured correctly, minimizing the probability of approximation errors.
 * **Production Ready:** Fully type-hinted, unit-tested, and packaged with modern standards (`pyproject.toml`).
 
@@ -109,18 +109,22 @@ Use the Gavish-Donoho optimal threshold to remove white noise from a signal.
 
 ```python
 import numpy as np
-from randomized_svd import rsvd, optimal_threshold
+from randomized_svd import rsvd, optimal_rank
 
-# Create a synthetic noisy signal
-X_true = np.random.randn(1000, 10) @ np.random.randn(10, 500)
-X_noisy = X_true + 0.5 * np.random.randn(1000, 500)
+# 1. Create a synthetic signal + noise
+X_true = np.random.randn(1000, 5) @ np.random.randn(5, 500)  # Rank 5
+X_noisy = X_true + 1.0 * np.random.randn(1000, 500)          # Add Noise (sigma=1.0)
 
-# Calculate optimal rank based on noise level (gamma)
-target_rank = optimal_threshold(m=1000, n=500, gamma=0.5)
+# 2. Run rSVD (with a generous 't' to capture the tail)
+U, S, Vt = rsvd(X_noisy, t=100)
 
-# Clean the matrix using the optimal rank
-U, S, Vt = rsvd(X_noisy, t=target_rank)
-X_clean = U @ S @ Vt
+# 3. Find optimal rank automatically
+# sigma=None triggers automatic noise level estimation from the data median
+k_opt = optimal_rank(m=1000, n=500, S=S, sigma=None)
+print(f"Optimal Rank Found: {k_opt}")  # Should be close to 5
+
+# 4. Truncate to clean signal
+X_clean = U[:, :k_opt] @ np.diag(S[:k_opt]) @ Vt[:k_opt, :]
 
 ```
 
@@ -217,10 +221,10 @@ randomized-svd/
 │       ├── core.py       # Main rSVD logic (Facade & Implementations)
 │       ├── pca.py        # Randomized PCA & Virtual Centering
 │       ├── sklearn.py    # Scikit-Learn Wrapper
-│       └── utils.py      # Math helpers (Gavish-Donoho threshold)
+│       └── threshold.py  # Gavish-Donoho & Marchenko-Pastur logic
 ├── tests/                # Pytest suite
 ├── Dockerfile            # Reproducible testing environment
-├── pyproject.toml        # Dependencies and metadata (replaces setup.py)
+├── pyproject.toml        # Dependencies and metadata
 └── README.md
 
 ```

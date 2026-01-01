@@ -2,13 +2,12 @@ import numpy as np
 import pytest
 from typing import cast
 from scipy import integrate
+from randomized_svd import optimal_threshold, optimal_rank
 from randomized_svd.threshold import (
-    optimal_threshold,
-    optimal_rank,
     _limit_aspect_ratio,
     _optimal_lambda,
-    _marchenko_pastur_density,
     _marchenko_pastur_median,
+    _marchenko_pastur_density
 )
 
 
